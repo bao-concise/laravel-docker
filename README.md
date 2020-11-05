@@ -14,9 +14,11 @@ mysql
 ## Build and run application
 
 Build images
+
 `docker-compose build --no-cache`
 
 Run application
+
 `docker-compose up`
 
 Run application at detach mode
