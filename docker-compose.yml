@@ -1,0 +1,73 @@
+version: '3.7'
+
+### Define Networks ###############################################
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+
+### Define volumes ###############################################
+volumes:
+  mysql:
+    driver: local
+
+### Define services ###############################################
+services:
+
+### NGINX Server #################################################
+  nginx:
+    build: ./nginx
+    image: baotd86/nginx
+    volumes:
+      - ./laravel-ecommerce:/var/www/html:cached
+      - ./logs/nginx:/var/log/nginx
+      - ./nginx/sites:/etc/nginx/sites-available
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - php-fpm
+    networks:
+      backend:
+        aliases:
+          - transtek.dev
+      frontend:
+        aliases:
+          - transtek.dev
+### PHP-PFM #################################################      
+  php-fpm:
+    build: ./php-fpm
+    image: baotd86/php-fpm
+    volumes:
+      - ./php-fpm/php7.4.ini:/usr/local/etc/php/php.ini
+      - ./laravel-ecommerce:/var/www/html:cached
+    expose:
+      - "9000"
+    extra_hosts:
+      - "dockerhost:10.0.75.1"
+    networks:
+      - backend
+      - frontend
+
+### MySQL #################################################
+  mysql:
+    build:
+      context: ./mysql
+      args:
+        - MYSQL_VERSION=latest
+    image: baotd86/mysql
+    environment:
+      - MYSQL_DATABASE=phpdock
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=root
+      - TZ=UTC
+    volumes:
+      - mysql:/var/lib/mysql
+      - ./mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    networks:
+      - backend
